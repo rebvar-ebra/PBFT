@@ -436,19 +436,8 @@ class Node():
 
             self.checkpoints[str(checkpoint_message)]=[self.node_id]
 
-            # Generate a new random signing key
-            signing_key = SigningKey.generate()
 
-            # Sign the message with the signing key
-            signed_checkpoint = signing_key.sign(str(checkpoint_message).encode())
-
-            # Obtain the verify key for a given signing key
-            verify_key = signing_key.verify_key
-
-            # Serialize the verify key to send it to a third party
-            public_key = verify_key.encode()
-
-            checkpoint_message = signed_checkpoint +(b'split')+  public_key
+            checkpoint_message = ecc.generate_sign(checkpoint_message)
 
             self.broadcast_message(consensus_nodes,checkpoint_message)
 
