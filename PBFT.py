@@ -121,7 +121,7 @@ def run_nodes(nodes):
                 messages_processing_rate.append(0) # Initiated with 0
                 consensus_nodes.append(j)
                 n = n + 1
-                f = (n - 1) // 3
+                f = (n - 1) / 3
                 #print("%s node %d started" %(node_type,j))
                 j=j+1
 
