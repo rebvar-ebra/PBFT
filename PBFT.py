@@ -9,11 +9,8 @@ from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
 
 ports_file = "ports.json"
-with open(ports_file):
-    ports_format= open(ports_file)
+with open(ports_file) as ports_format:
     ports = json.load(ports_format)
-    ports_format.close()
-
 clients_starting_port = ports["clients_starting_port"]
 clients_max_number = ports["clients_max_number"]
 
@@ -293,7 +290,7 @@ class Node():
                                     node_id = received_message["node_id"]
                                     if (node_id not in self.checkpoints[str(checkpoint)]):
                                             self.checkpoints[str(checkpoint)].append(node_id)
-                                            if (len(self.checkpoints[str(checkpoint)]) == (2*f+1)):
+                                            if (len(self.checkpoints[str(checkpoint)]) <= (2*f+1)):
                                                     # This will be the last stable checkpoint
                                                     self.stable_checkpoint = checkpoint
                                                     self.stable_checkpoint_validators = self.checkpoints[str(checkpoint)]
@@ -327,21 +324,16 @@ class Node():
                                     if node_requester not in requested_nodes:
                                         self.received_view_changes[new_asked_view].append(received_message)
                             if len(self.received_view_changes[new_asked_view])==2*f:
-
                                     #The primary sends a view-change message for this view if it didn't do it before
                                     if new_asked_view not in self.asked_view_change:
                                         view_change_message = self.broadcast_view_change()
                                         self.received_view_changes[new_asked_view].append(view_change_message)
-
                                     # Broadcast a new view message:
-                                    with open(new_view_format_file):
-                                            with open(new_view_format_file) as new_view_format:
-                                                    new_view_message = json.load(new_view_format)
+                                        with open(new_view_format_file) as new_view_format:
+                                                new_view_message = json.load(new_view_format)
                                     new_view_message["new_view_number"]=new_asked_view
-
                                     V=self.received_view_changes[new_asked_view]
                                     new_view_message["V"]=V
-
                                     # Creating the "O" set of the new view message:
                                     # Initializing min_s and max_s:
                                     min_s=0
@@ -357,14 +349,12 @@ class Node():
 
                                     if (max_s>min_s):
 
-                                                                    # Creating a preprepare-view message for new_asked_view for each sequence number between max_s and min_s
+                                            # Creating a preprepare-view message for new_asked_view for each sequence number between max_s and min_s
                                             for s in range (min_s,max_s):
-                                                    with open(preprepare_format_file):
-                                                            with open(preprepare_format_file) as preprepare_format:
-                                                                    preprepare_message = json.load(preprepare_format)
+                                                    with open(preprepare_format_file) as preprepare_format:
+                                                        preprepare_message = json.load(preprepare_format)
                                                     preprepare_message["view_number"]=new_asked_view
                                                     preprepare_message["sequence_number"]=s
-
                                                     i=0 # There is no set Pm in P with sequence number s - In our code: there is no prepared message in P where sequence number = s (case 2 in the paper) => It turns i=1 if we find such a set
                                                     P = received_message["P"]
                                                     v=0 # Initiate the view number so that we can find the highest one in P
@@ -425,20 +415,15 @@ class Node():
                 self.asked_view_change.clear()
 
     def _process_check_point(self, sequence_number, received_message, reply):
-            with open(checkpoint_format_file):
-                    with open(checkpoint_format_file) as checkpoint_format:
-                            checkpoint_message = json.load(checkpoint_format)
+            with open(checkpoint_format_file) as checkpoint_format:
+                checkpoint_message = json.load(checkpoint_format)
             checkpoint_message["sequence_number"] = sequence_number
             checkpoint_message["node_id"] = self.node_id
             checkpoint_content = [received_message["request_digest"],received_message["client_id"],reply] # We define the current state as the last executed request
             checkpoint_message["checkpoint_digest"]= hashlib.sha256(str(checkpoint_content).encode()).hexdigest()
             self.checkpoints_sequence_number.append(sequence_number)
-
             self.checkpoints[str(checkpoint_message)]=[self.node_id]
-
-
             checkpoint_message = ecc.generate_sign(checkpoint_message)
-
             self.broadcast_message(consensus_nodes,checkpoint_message)
 
     def _prepare_request(self, received_message):
@@ -450,7 +435,6 @@ class Node():
             request = received_message["request"]
             digest = hashlib.sha256(request.encode()).hexdigest()
             requests_digest = received_message["request_digest"]
-
             number_of_messages[received_message["request"]] = number_of_messages[received_message["request"]] + 1
             timestamp = received_message["timestamp"]
             client_id = received_message["client_id"]
@@ -495,7 +479,6 @@ class Node():
             requests_digest = received_message["request_digest"]
             view = received_message["view_number"]
             tuple = (view,received_message["sequence_number"])
-
             # Making sure the digest's request is good + the view number in the message is similar to the view number of the node + We did not broadcast a message with the same view number and sequence number
             if ((digest==requests_digest) and (view==self.view_number)):
                 if request not in self.accepted_requests_time:
@@ -542,7 +525,6 @@ class Node():
             threading.Thread(target=self.check,args=(received_message,waiting_time,)).start()
 
     def check(self,received_message,waiting_time):
-            # Start view change if one of the timers has reached the limit:
             i = 0 # Means no timer reached the limit , i = 1 means one of the timers reached their limit
             if len(self.accepted_requests_time)!=0 and len(self.asked_view_change)==0: # Check if the dictionary is not empty
                 for request in self.accepted_requests_time:
@@ -601,16 +583,14 @@ class Node():
     def broadcast_preprepare_message(self,request_message,nodes_ids_list): # The primary node prepares and broadcats a PREPREPARE message
         if replied_requests[request_message["request"]] != 0:
             return
-        with open(preprepare_format_file):
-            with open(preprepare_format_file) as preprepare_format:
-                preprepare_message = json.load(preprepare_format)
+        with open(preprepare_format_file) as preprepare_format:
+            preprepare_message = json.load(preprepare_format)
         preprepare_message["view_number"]=self.view_number
         global sequence_number
         preprepare_message["sequence_number"]=sequence_number
         preprepare_message["timestamp"]=request_message["timestamp"]
         tuple = (self.view_number,sequence_number)
         sequence_number = sequence_number + 1 # Increment the sequence number after each request
-        #Calculating the request's digest using SHA256
         request = request_message["request"]
         digest = hashlib.sha256(request.encode()).hexdigest()
         preprepare_message["request_digest"]=digest
@@ -626,9 +606,8 @@ class Node():
     def broadcast_prepare_message(self,preprepare_message,nodes_ids_list): # The node broadcasts a prepare message
         if replied_requests[preprepare_message["request"]] != 0:
             return
-        with open(prepare_format_file):
-            with open(prepare_format_file) as prepare_format:
-                prepare_message = json.load(prepare_format)
+        with open(prepare_format_file) as prepare_format:
+            prepare_message = json.load(prepare_format)
         prepare_message["view_number"]=self.view_number
         prepare_message["sequence_number"]=preprepare_message["sequence_number"]
         prepare_message["request_digest"]=preprepare_message["request_digest"]
@@ -647,9 +626,8 @@ class Node():
     def broadcast_commit_message(self,prepare_message,nodes_ids_list,sequence_number): # The node broadcasts a commit message
         if replied_requests[prepare_message["request"]] != 0:
             return
-        with open(commit_format_file):
-            with open(commit_format_file) as commit_format:
-                commit_message = json.load(commit_format)
+        with open(commit_format_file) as commit_format:
+            commit_message = json.load(commit_format)
         commit_message["view_number"]=self.view_number
         commit_message["sequence_number"]=sequence_number
         commit_message["node_id"]=self.node_id
@@ -664,9 +642,8 @@ class Node():
         self.broadcast_message(nodes_ids_list,commit_message)
 
     def broadcast_view_change(self): # The node broadcasts a view change
-        with open(view_change_format_file):
-            with open(view_change_format_file) as view_change_format:
-                view_change_message = json.load(view_change_format)
+        with open(view_change_format_file) as view_change_format:
+            view_change_message = json.load(view_change_format)
         new_view = self.view_number+1
         view_change_message["new_view"]=new_view
         view_change_message["last_sequence_number"]=self.stable_checkpoint["sequence_number"]
@@ -677,7 +654,8 @@ class Node():
         else:
             self.received_view_changes[new_view].append(view_change_message)
 
-        # We define P as a set of prepared messages at the actual node with sequence number higher than the sequence number in the last checkpoint
+        # We define P as a set of prepared messages at the actual node with sequence number higher
+        # than the sequence number in the last checkpoint
         view_change_message["P"]=[message for message in self.prepared_messages if message["sequence_number"]>self.stable_checkpoint["sequence_number"]]
 
 
@@ -691,9 +669,8 @@ class Node():
 
         client_id = commit_message["client_id"]
         client_port = clients_ports[client_id]
-        with open(reply_format_file):
-            with open(reply_format_file) as reply_format:
-                reply_message = json.load(reply_format)
+        with open(reply_format_file) as reply_format:
+            reply_message = json.load(reply_format)
         reply_message["view_number"]=self.view_number
         reply_message["client_id"]=client_id
         reply_message["node_id"]=self.node_id
@@ -703,10 +680,7 @@ class Node():
         reply_message["sequence_number"]=commit_message["sequence_number"]
         reply_message["request"]=commit_message["request"]
         reply_message["request_digest"]=commit_message["request_digest"]
-
-
         signed_reply_message = ecc.generate_sign(reply_message)
-
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host = socket.gethostname()
         try:
@@ -740,9 +714,9 @@ class FaultyPrimary(Node): # This node changes the client's request digest while
     def receive(self,waiting_time=0):
         Node.receive(self,waiting_time)
     def broadcast_preprepare_message(self,request_message,nodes_ids_list): # The primary node prepares and broadcats a PREPREPARE message
-        with open(preprepare_format_file):
-            with open(preprepare_format_file) as preprepare_format:
-                preprepare_message = json.load(preprepare_format)
+
+        with open(preprepare_format_file) as preprepare_format:
+            preprepare_message = json.load(preprepare_format)
         preprepare_message["view_number"]=self.view_number
         global sequence_number
         preprepare_message["sequence_number"]=sequence_number
@@ -769,9 +743,8 @@ class FaultyNode(Node): # This node changes digest in prepare message
     def broadcast_prepare_message(self,preprepare_message,nodes_ids_list): # The node broadcasts a prepare message
         if replied_requests[preprepare_message["request"]] != 0:
             return
-        with open(prepare_format_file):
-            with open(prepare_format_file) as prepare_format:
-                prepare_message = json.load(prepare_format)
+        with open(prepare_format_file) as prepare_format:
+            prepare_message = json.load(prepare_format)
         prepare_message["view_number"]=self.view_number
         prepare_message["sequence_number"]=preprepare_message["sequence_number"]
         prepare_message["request_digest"]=preprepare_message["request_digest"]+"abc"
@@ -793,9 +766,8 @@ class FaultyRepliesNode(Node): # This node sends a fauly reply to the client
     def send_reply_message_to_client(self,commit_message):
         client_id = commit_message["client_id"]
         client_port = clients_ports[client_id]
-        with open(reply_format_file):
-            with open(reply_format_file) as reply_format:
-                reply_message = json.load(reply_format)
+        with open(reply_format_file) as reply_format:
+            reply_message = json.load(reply_format)
         reply_message["view_number"]=self.view_number
         reply_message["client_id"]=client_id
         reply_message["node_id"]=self.node_id

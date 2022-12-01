@@ -6,12 +6,9 @@ from PBFT import *
 from nacl.signing import VerifyKey
 import ecc
 
-ports_file = "ports.json"
-with open(ports_file):
-    ports_format= open(ports_file)
+file = "ports.json"
+with open(file) as ports_format:
     ports = json.load(ports_format)
-    ports_format.close()
-
 clients_starting_port = ports["clients_starting_port"]
 clients_max_number = ports["clients_max_number"]
 
@@ -68,7 +65,7 @@ class Client:
             received_message  = verify_key.verify(received_message).decode()
             received_message = received_message.replace("\'", "\"")
             received_message = json.loads(received_message)
-            #print("Client %d received message: %s" % (self.client_id , received_message))
+            print("Client %d received message: %s" % (self.client_id , received_message))
             answering_node_id = received_message["node_id"]
             if (answering_node_id not in answered_nodes):
                 answered_nodes.append(answering_node_id)
@@ -134,12 +131,9 @@ class Client:
 
             #print("Client %d got message: %s" % (self.client_id , received_message))
             sender_socket.close()
-
             [received_message , public_key] = received_message.split(b'split')
-
             # Create a VerifyKey object from a hex serialized public key
             verify_key = VerifyKey(public_key)
-
             received_message  = verify_key.verify(received_message).decode()
             received_message = received_message.replace("\'", "\"")
             received_message = json.loads(received_message)

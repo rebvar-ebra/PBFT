@@ -4,13 +4,9 @@ import hashlib
 
 def generate_sign(chk_msg):
     signing_key = SigningKey.generate()
-
     signed_preprepare = signing_key.sign(str(chk_msg).encode())
-
     verify_key = signing_key.verify_key
-
     public_key = verify_key.encode()
-
     return signed_preprepare + (b'split') + public_key
 
 def generate_verfiy(public_key,rece_msg):
