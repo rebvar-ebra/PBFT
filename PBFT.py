@@ -9,6 +9,7 @@ import argparse
 import sys
 from nacl.signing import SigningKey
 from nacl.signing import VerifyKey
+import output
 
 # --- Constants & Templates ---
 
@@ -103,7 +104,7 @@ try:
     NODES_PORTS = [(ports_data["nodes_starting_port"] + i) for i in range(ports_data["nodes_max_number"])]
     CLIENTS_PORTS = [(ports_data["clients_starting_port"] + i) for i in range(ports_data["clients_max_number"])]
 except Exception as e:
-    print(f"Error loading ports.json: {e}")
+    output.log_error_loading_ports(e)
     sys.exit(1)
 
 def recv_all(sock):
@@ -163,7 +164,7 @@ class PBFTNetwork:
                 
                 if self.processed_requests % 5 == 0:
                     delta = time.time() - self.first_reply_time
-                    print(f"Network validated {self.processed_requests} requests within {delta:.4f} seconds")
+                    output.log_network_validation(self.processed_requests, delta)
             
             return self.request_message_counts.get(request_text, 0)
 
@@ -350,7 +351,7 @@ class Node:
         self.view_number = msg["new_view_number"]
         self.primary_node_id = self.network.get_primary_id(self.view_number)
         self.asked_view_change.clear()
-        print(f"Node {self.node_id} entered view {self.view_number}")
+        output.log_node_view_entry(self.node_id, self.view_number)
 
     # --- Actions ---
 

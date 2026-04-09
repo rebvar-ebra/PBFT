@@ -4,17 +4,17 @@ import time
 import sys
 from PBFT import *
 from client import *
+import output
 
 def interactive_wizard(cfg):
-    print("\n--- PBFT Simulation Configuration Wizard ---")
-    print("Please enter the number of nodes for each category.")
+    output.show_wizard_header()
     
     def get_input(prompt, default):
         val = input(f"  > {prompt} (default {default}): ").strip()
         try:
             return type(default)(val) if val else default
         except ValueError:
-            print(f"    Invalid input, using default: {default}")
+            output.show_invalid_input_warning(default)
             return default
 
     cfg.honest = get_input("Number of Honest Nodes", 10)
@@ -27,9 +27,7 @@ def interactive_wizard(cfg):
     total_n = cfg.honest + cfg.faulty_primary + cfg.slow + cfg.non_responding + cfg.faulty + cfg.faulty_replies
     f_val = (total_n - 1) // 3
     
-    print(f"\n[Configuration Summary]")
-    print(f"  Total Nodes (n): {total_n}")
-    print(f"  Fault Tolerance (f): {f_val} (Network can handle up to {f_val} faulty/Byzantine nodes)")
+    output.show_configuration_summary(total_n, f_val)
     
     cfg.checkpoint = get_input("Checkpoint Frequency", 100)
     cfg.view_timeout = get_input("View Change Timeout (seconds)", 120)
@@ -38,7 +36,7 @@ def interactive_wizard(cfg):
     
     confirm = input("\nStart simulation with this configuration? (Y/n): ").lower()
     if confirm == 'n':
-        print("Configuration cancelled. Exiting.")
+        output.show_config_cancelled()
         sys.exit(0)
         
     return cfg
@@ -47,7 +45,7 @@ def send_requests(count, client_resend, start_index=0):
     if count <= 0:
         return
         
-    print(f"\n--- Initiating {count} client requests ---")
+    output.show_initiating_requests(count)
     clients_list = []
     for i in range(start_index, start_index + count):
         client = Client(i, client_resend)
@@ -65,15 +63,12 @@ def send_requests(count, client_resend, start_index=0):
 
     for t in client_threads:
         t.join()
-    print("Batch of requests processed.")
+    output.show_batch_processed()
 
 def runtime_menu(client_resend):
     total_requests_sent = 0
     while True:
-        print("\n--- PBFT Simulation Runtime Menu ---")
-        print("1. Send batch of requests")
-        print("2. Check Network Status")
-        print("3. Exit")
+        output.show_runtime_menu_header()
         
         choice = input("Select an option: ").strip()
         
@@ -83,17 +78,14 @@ def runtime_menu(client_resend):
                 send_requests(count, client_resend, start_index=total_requests_sent)
                 total_requests_sent += count
             except ValueError:
-                print("Invalid input. Please enter a number.")
+                output.show_invalid_choice() # Using show_invalid_choice as a generic invalid input warning here, or I could use show_invalid_input_warning if I had a default
         elif choice == '2':
-            print(f"\n[Network Status]")
-            print(f"Primary Node ID: {get_primary_id()}")
-            print(f"Nodes IDS List: {get_nodes_ids_list()}")
-            print(f"Faulty Tolerance (f): {get_f()}")
+            output.show_network_status(get_primary_id(), get_nodes_ids_list(), get_f())
         elif choice == '3':
-            print("Exiting simulation...")
+            output.show_exit_message()
             break
         else:
-            print("Invalid choice.")
+            output.show_invalid_choice()
 
 def main():
     parser = argparse.ArgumentParser(description='Practical Byzantine Fault Tolerance (PBFT) Simulation')
@@ -144,7 +136,7 @@ def main():
     else:
         send_requests(args.requests, args.client_resend)
     
-    print("\nSimulation session finished.")
+    output.show_simulation_finished()
 
 if __name__ == "__main__":
     main()

@@ -5,6 +5,7 @@ import time
 from PBFT import *
 from nacl.signing import VerifyKey
 import ecc
+import output
 
 
 # Redundant port and format definitions removed. 
@@ -59,7 +60,7 @@ class Client:
                 c,_ = s.accept()
             except socket.timeout:
                 if len(self.sent_requests_without_answer)!=0:
-                    print("No received reply")
+                    output.log_no_reply_warning()
                     self.broadcast_request(request_message,nodes_ids_list,sending_time,f)
                 break
             received_message = recv_all(c)
@@ -72,7 +73,7 @@ class Client:
             received_message  = verify_key.verify(received_message).decode()
             received_message = received_message.replace("\'", "\"")
             received_message = json.loads(received_message)
-            print("Client %d received message: %s" % (self.client_id , received_message))
+            output.log_client_message_received(self.client_id, received_message)
             answering_node_id = received_message["node_id"]
             if (answering_node_id not in answered_nodes):
                 answered_nodes.append(answering_node_id)
@@ -92,7 +93,7 @@ class Client:
                         receiving_time=time.time()
                         duration = receiving_time-sending_time
                         number_of_messages = reply_received(received_message["request"],received_message["result"])
-                        print("Client %d got reply within %f seconds. The network exchanged %d messages" % (self.client_id,duration,number_of_messages))
+                        output.log_client_reply_stats(self.client_id, duration, number_of_messages)
                         self.sent_requests_without_answer.remove(received_message["request"])
 
     def send_to_primary(self,request,primary_node_id,nodes_ids_list,f): # Sends a request to the primary and waits for f+1 similar answers
@@ -129,7 +130,7 @@ class Client:
             except socket.timeout:
                 if len(self.sent_requests_without_answer) == 0:
                     continue
-                print("No received reply")
+                output.log_no_reply_warning()
                 # Broadcasting request:
                 self.broadcast_request(request_message,nodes_ids_list,sending_time,f)
                 break
@@ -141,7 +142,6 @@ class Client:
             received_message  = verify_key.verify(received_message).decode()
             received_message = received_message.replace("\'", "\"")
             received_message = json.loads(received_message)
-            #print("Client %d received message: %s" % (self.client_id , received_message))
             answering_node_id = received_message["node_id"]
             request_timestamp = received_message["timestamp"]
             result = received_message["result"]
@@ -165,7 +165,7 @@ class Client:
                         duration = receiving_time-sending_time
                         number_of_messages = reply_received(received_message["request"],received_message["result"])
                         if similar_replies == (f+1):
-                            print("Client %d got reply within %f seconds. The network exchanged %d messages" % (self.client_id,duration,number_of_messages))
+                            output.log_client_reply_stats(self.client_id, duration, number_of_messages)
                             if (received_message["request"] in self.sent_requests_without_answer):
                                 self.sent_requests_without_answer.remove(received_message["request"])
                             break
