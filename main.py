@@ -133,7 +133,7 @@ def main():
         nodes=nodes_config,
         proportion=1,
         checkpoint_frequency0=args.checkpoint,
-        clients_ports0=clients_ports,
+        clients_ports0=CLIENTS_PORTS,
         timer_limit_before_view_change0=args.view_timeout
     )
 

@@ -6,20 +6,10 @@ from PBFT import *
 from nacl.signing import VerifyKey
 import ecc
 
-file = "ports.json"
-with open(file) as ports_format:
-    ports = json.load(ports_format)
-clients_starting_port = ports["clients_starting_port"]
-clients_max_number = ports["clients_max_number"]
 
-nodes_starting_port = ports["nodes_starting_port"]
-nodes_max_number = ports["nodes_max_number"]
+# Redundant port and format definitions removed. 
+# Using NODES_PORTS, CLIENTS_PORTS, and MessageTemplates from PBFT.py.
 
-nodes_ports = [(nodes_starting_port + i) for i in range (0,nodes_max_number)]
-clients_ports = [(clients_starting_port + i) for i in range (0,clients_max_number)]
-
-global request_format_file
-request_format_file = "messages_formats/request_format.json"
 
 def recv_all(sock):
     data = b""
@@ -40,7 +30,7 @@ class Client:
 
     def __init__(self,client_id,waiting_time_before_resending_request):
         self.client_id = client_id
-        self.client_port = clients_ports[client_id]
+        self.client_port = CLIENTS_PORTS[client_id]
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.settimeout(waiting_time_before_resending_request)	
         host = socket.gethostname() 
@@ -52,7 +42,7 @@ class Client:
     def broadcast_request(self,request_message,nodes_ids_list,sending_time,f): # This function is executed if the primary node doesn't receive the request. It is then broadcasted to all the nodes
 
         for node_id in nodes_ids_list:
-            node_port = nodes_ports[node_id]
+            node_port = NODES_PORTS[node_id]
             sending_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             host = socket.gethostname() 
             sending_socket.connect((host, node_port))
@@ -106,10 +96,8 @@ class Client:
                         self.sent_requests_without_answer.remove(received_message["request"])
 
     def send_to_primary(self,request,primary_node_id,nodes_ids_list,f): # Sends a request to the primary and waits for f+1 similar answers
-        primary_node_port = nodes_ports[primary_node_id]
-        with open(request_format_file):
-            with open(request_format_file) as request_format:
-                request_message = json.load(request_format)
+        primary_node_port = NODES_PORTS[primary_node_id]
+        request_message = MessageTemplates.get("REQUEST")
         now = datetime.datetime.now().timestamp()
         request_message["timestamp"] = now
         request_message["request"] = request
