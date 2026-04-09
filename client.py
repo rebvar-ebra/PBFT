@@ -23,6 +23,7 @@ request_format_file = "messages_formats/request_format.json"
 
 def recv_all(sock):
     data = b""
+    sock.settimeout(5.0) # Safety timeout
     while True:
         try:
             chunk = sock.recv(4096)
@@ -56,6 +57,7 @@ class Client:
             host = socket.gethostname() 
             sending_socket.connect((host, node_port))
             sending_socket.send(request_message)
+            sending_socket.close() # Ensure node detects EOF
 
         # Waiting for answers
         answered_nodes = [] # list of nodes ids that answered the request
@@ -121,6 +123,7 @@ class Client:
         host = socket.gethostname()
         sending_socket.connect((host, primary_node_port))
         sending_socket.send(request_message)
+        sending_socket.close() # Ensure node detects EOF
         if (request not in self.sent_requests_without_answer):
             self.sent_requests_without_answer.append(request)
         sending_time = time.time() # This is the time when the client's request was sent to the network

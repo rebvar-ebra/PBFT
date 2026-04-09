@@ -31,6 +31,7 @@ new_view_format_file = "messages_formats/new_view_format.json"
 
 def recv_all(sock):
     data = b""
+    sock.settimeout(5.0) # Safety timeout
     while True:
         try:
             chunk = sock.recv(4096)
@@ -538,7 +539,6 @@ class Node():
                 # Create a VerifyKey object from a hex serialized public key    
                 verify_key = VerifyKey(public_key)   
                 received_message  = verify_key.verify(received_message).decode()
-                received_message = received_message.replace("\@", "\"") # Fix potential bad characters if any
                 received_message = received_message.replace("\'", "\"")
                 received_message = json.loads(received_message)
                 threading.Thread(target=self.check,args=(received_message,waiting_time,)).start()
