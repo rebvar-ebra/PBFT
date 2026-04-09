@@ -21,6 +21,20 @@ clients_ports = [(clients_starting_port + i) for i in range (0,clients_max_numbe
 global request_format_file
 request_format_file = "messages_formats/request_format.json"
 
+def recv_all(sock):
+    data = b""
+    while True:
+        try:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+        except socket.timeout:
+            break
+        except:
+            break
+    return data
+
 class Client:
 
     def __init__(self,client_id,waiting_time_before_resending_request):
@@ -56,7 +70,8 @@ class Client:
                     print("No received reply")
                     self.broadcast_request(request_message,nodes_ids_list,sending_time,f)
                 break
-            received_message = c.recv(2048)
+            received_message = recv_all(c)
+            c.close()
 
             [received_message,public_key] = received_message.split(b'split')
 
@@ -119,7 +134,7 @@ class Client:
         while True:
             try:
                 s=self.socket
-                sender_socket = s.accept()[0]
+                client_sock, _ = s.accept()
             except socket.timeout:
                 if len(self.sent_requests_without_answer) == 0:
                     continue
@@ -127,10 +142,8 @@ class Client:
                 # Broadcasting request:
                 self.broadcast_request(request_message,nodes_ids_list,sending_time,f)
                 break
-            received_message = sender_socket.recv(2048)
-
-            #print("Client %d got message: %s" % (self.client_id , received_message))
-            sender_socket.close()
+            received_message = recv_all(client_sock)
+            client_sock.close()
             [received_message , public_key] = received_message.split(b'split')
             # Create a VerifyKey object from a hex serialized public key
             verify_key = VerifyKey(public_key)

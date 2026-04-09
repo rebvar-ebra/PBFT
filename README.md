@@ -116,11 +116,32 @@ pip install -r requirements.txt
 Check `ports.json` to ensure the port ranges (starting from `3000` for nodes and `30000` for clients) are available on your system.
 
 ### 3. Run the Simulation
-Execute the main script to start the PBFT network and the client simulation:
+Execute the main script to start the PBFT network. You can run it in **One-Shot mode** or **Interactive mode**.
 
+#### One-Shot Mode
+Specify all parameters upfront:
 ```bash
-python3 main.py
+python3 main.py --honest 7 --faulty 2 --requests 5
 ```
+
+#### Interactive Mode (Wizard & Menu)
+Use the `-i` flag to be guided through the configuration and control the simulation step-by-step:
+```bash
+python3 main.py -i
+```
+In interactive mode, you will first use a configuration wizard to setup the nodes, and then a runtime menu will allow you to send batches of requests and check the network status at your own pace.
+
+#### Available CLI Options:
+- `--honest`: Number of honest nodes (default: 10)
+- `--faulty-primary`: Number of faulty primary nodes (default: 0)
+- `--slow`: Number of slow nodes (default: 0)
+- `--non-responding`: Number of non-responding nodes (default: 0)
+- `--faulty`: Number of faulty nodes (Byzantine) (default: 0)
+- `--faulty-replies`: Number of faulty replies nodes (default: 0)
+- `--requests`: Number of client requests (default: 10)
+- `--checkpoint`: Checkpoint frequency (default: 100)
+- `--view-timeout`: Timer limit before view change in seconds (default: 120)
+- `--client-resend`: Client waiting time before resending request in ms (default: 200)
 
 You should see output indicating that clients are receiving replies and the network is validating requests.
 

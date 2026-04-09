@@ -29,6 +29,20 @@ checkpoint_vote_format_file = "messages_formats/checkpoint_vote_format.json"
 view_change_format_file = "messages_formats/view_change_format.json"
 new_view_format_file = "messages_formats/new_view_format.json"
 
+def recv_all(sock):
+    data = b""
+    while True:
+        try:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+        except socket.timeout:
+            break
+        except:
+            break
+    return data
+
 def run_PBFT(nodes,proportion,checkpoint_frequency0,clients_ports0,timer_limit_before_view_change0): # All the nodes participate in the consensus
 
     global p
@@ -513,16 +527,24 @@ class Node():
         while True:
             s = self.socket
             c,_ = s.accept()
-            received_message = c.recv(2048)
-            #print("Node %d got message: %s" % (self.node_id , received_message))
-            [received_message,public_key] = received_message.split(b'split')
+            received_message = recv_all(c)
+            c.close()
 
-            # Create a VerifyKey object from a hex serialized public key    
-            verify_key = VerifyKey(public_key)   
-            received_message  = verify_key.verify(received_message).decode()
-            received_message = received_message.replace("\'", "\"")
-            received_message = json.loads(received_message)
-            threading.Thread(target=self.check,args=(received_message,waiting_time,)).start()
+            if not received_message:
+                continue
+
+            try:
+                [received_message,public_key] = received_message.split(b'split')
+                # Create a VerifyKey object from a hex serialized public key    
+                verify_key = VerifyKey(public_key)   
+                received_message  = verify_key.verify(received_message).decode()
+                received_message = received_message.replace("\@", "\"") # Fix potential bad characters if any
+                received_message = received_message.replace("\'", "\"")
+                received_message = json.loads(received_message)
+                threading.Thread(target=self.check,args=(received_message,waiting_time,)).start()
+            except Exception as e:
+                # print(f"Node {self.node_id} error decoding message: {e}")
+                pass
 
     def check(self,received_message,waiting_time):
             i = 0 # Means no timer reached the limit , i = 1 means one of the timers reached their limit
@@ -705,10 +727,9 @@ class NonRespondingNode(Node):
         while True:
             s=self.socket
             sender_socket = s.accept()[0]
-            received_message = sender_socket.recv(2048).decode()
-            #print("Node %d got message: %s" % (self.node_id , received_message))
+            # Just read all data and close to prevent buffer build-up or crashes
+            recv_all(sender_socket)
             sender_socket.close()
-            # receives messages but doesn't do anything
           
 class FaultyPrimary(Node): # This node changes the client's request digest while sending a preprepare message
     def receive(self,waiting_time=0):
