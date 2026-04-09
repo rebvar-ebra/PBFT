@@ -86,7 +86,7 @@ def run_PBFT(nodes,proportion,checkpoint_frequency0,clients_ports0,timer_limit_b
     global consensus_nodes # ids of nodes participating in the consensus
     consensus_nodes=[]
 
-    threading.Thread(target=run_nodes,args=(nodes,)).start()
+    threading.Thread(target=run_nodes,args=(nodes,),daemon=True).start()
 
 def run_nodes(nodes):
     global j
@@ -114,14 +114,14 @@ def run_nodes(nodes):
                     node=FaultyNode(node_id=j)
                 elif (node_type=="faulty_replies_node"):
                     node=FaultyRepliesNode(node_id=j)
-                threading.Thread(target=node.receive,args=()).start()
+                threading.Thread(target=node.receive,args=(),daemon=True).start()
                 nodes_list.append(node)
                 the_nodes_ids_list.append(j)
                 processed_messages.append(0)
                 messages_processing_rate.append(0) # Initiated with 0
                 consensus_nodes.append(j)
                 n = n + 1
-                f = (n - 1) / 3
+                f = (n - 1) // 3
                 #print("%s node %d started" %(node_type,j))
                 j=j+1
 

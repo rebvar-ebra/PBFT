@@ -14,6 +14,6 @@ def generate_verfiy(public_key,rece_msg):
     return verify_key.verify(rece_msg).decode()
 
 def hashing_function(entity):
-    h=hashlib.sha256
+    h=hashlib.sha256()
     h.update(str(entity).encode())
-    return h.hexdisgest()
+    return h.hexdigest()

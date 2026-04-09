@@ -162,6 +162,7 @@ class Client:
                         number_of_messages = reply_received(received_message["request"],received_message["result"])
                         if similar_replies == (f+1):
                             print("Client %d got reply within %f seconds. The network exchanged %d messages" % (self.client_id,duration,number_of_messages))
-                        if (received_message["request"] in self.sent_requests_without_answer):
-                            self.sent_requests_without_answer.remove(received_message["request"])
+                            if (received_message["request"] in self.sent_requests_without_answer):
+                                self.sent_requests_without_answer.remove(received_message["request"])
+                            break
                         

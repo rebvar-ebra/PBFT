@@ -101,6 +101,37 @@ PBFT is often misunderstood as an unscalable consensus algorithm. However, this 
 
 By structuring nodes in this manner, PBFT can provide high throughput and reliability in **enterprise environments** where trust is partial, and fault tolerance is a necessity.
 
+## 🚀 Getting Started
+
+To run the PBFT simulation on your local machine, follow these steps:
+
+### 1. Install Dependencies
+This project requires `PyNaCl` for cryptographic signatures. You can install it using `pip`:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Configure Ports
+Check `ports.json` to ensure the port ranges (starting from `3000` for nodes and `30000` for clients) are available on your system.
+
+### 3. Run the Simulation
+Execute the main script to start the PBFT network and the client simulation:
+
+```bash
+python3 main.py
+```
+
+You should see output indicating that clients are receiving replies and the network is validating requests.
+
+## 🛠 Project Structure
+
+- `PBFT.py`: Core implementation of the PBFT protocol and node behaviors.
+- `client.py`: Implementation of the PBFT client and consensus gathering logic.
+- `ecc.py`: Cryptographic utilities for message signing and hashing.
+- `main.py`: Entry point to configure and run the simulation.
+- `ports.json`: Network configuration for nodes and clients.
+
 ## 📚 References
 
 - **Original Paper**: Miguel Castro and Barbara Liskov. "Practical Byzantine Fault Tolerance." *Proceedings of the Third Symposium on Operating Systems Design and Implementation (OSDI)*, 1999.

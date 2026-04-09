@@ -64,7 +64,17 @@ clients_list = []
 for i in range(requests_number):
     globals()["C%s" % str(i)] = Client(i, waiting_time_before_resending_request)
     clients_list.append(globals()["C%s" % str(i)])
+
+client_threads = []
 for i in range(requests_number):
-    threading.Thread(target=clients_list[i].send_to_primary,
-                     args=("Requester  " + str(i), get_primary_id(), get_nodes_ids_list(), get_f())).start()
+    t = threading.Thread(target=clients_list[i].send_to_primary,
+                         args=("Requester  " + str(i), get_primary_id(), get_nodes_ids_list(), get_f()))
+    t.start()
+    client_threads.append(t)
     time.sleep(0)
+
+# Wait for all client threads to finish
+for t in client_threads:
+    t.join()
+
+print("All client requests processed. Simulation terminating.")
